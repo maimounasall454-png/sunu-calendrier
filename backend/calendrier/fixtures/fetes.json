@@ -1,0 +1,17 @@
+[
+  {"model":"calendrier.feteislamique","pk":1,"fields":
+   {"nom":"Aïd el-Fitr (Korité)","nom_wolof":"Korite","mois_hijri":10,"jour_hijri":1,
+    "description":"Fête de fin du mois de Ramadan"}},
+  {"model":"calendrier.feteislamique","pk":2,"fields":
+   {"nom":"Aïd el-Adha (Tabaski)","nom_wolof":"Tabaski","mois_hijri":12,"jour_hijri":10,
+    "description":"Fête du sacrifice - Ibrahim"}},
+  {"model":"calendrier.feteislamique","pk":3,"fields":
+   {"nom":"Mawlid (Gamou)","nom_wolof":"Gamou","mois_hijri":3,"jour_hijri":12,
+    "description":"Naissance du Prophète Muhammad"}},
+  {"model":"calendrier.feteislamique","pk":4,"fields":
+   {"nom":"Tamkharit","nom_wolof":"Tamkharit","mois_hijri":1,"jour_hijri":10,
+    "description":"Jour de l'Achoura"}},
+  {"model":"calendrier.feteislamique","pk":5,"fields":
+   {"nom":"Nuit du destin","nom_wolof":"Laylat al-Qadr","mois_hijri":9,"jour_hijri":27,
+    "description":"Nuit du Destin - 27 Ramadan"}}
+]
