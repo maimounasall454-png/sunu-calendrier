@@ -4,7 +4,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-xamxam-2024'
 DEBUG = True
-ALLOWED_HOSTS = ['*']
+# Autorise ton adresse IP spécifique et le localhost
+ALLOWED_HOSTS = ['192.168.1.31', '127.0.0.1', 'localhost']
  
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -29,6 +30,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+CORS_ALLOW_ALL_ORIGINS = True
  
 ROOT_URLCONF = 'config.urls'
  
@@ -41,12 +43,26 @@ TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates",
         "django.contrib.messages.context_processors.messages",
     ]},
 }]
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # <--- Vérifiez qu'il n'y a pas de ... autour
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware', # <--- L'erreur vient d'ici
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
  
-DATABASES = {"default": {
-    "ENGINE": "django.db.backends.sqlite3",
-    "NAME": BASE_DIR / "db.sqlite3",
-}}
- 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,  # Augmente le temps d'attente à 20 secondes
+        },
+    }
+}
 CORS_ALLOW_ALL_ORIGINS = True
  
 REST_FRAMEWORK = {
