@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-xamxam-2024'
 DEBUG = True
 # Autorise ton adresse IP spécifique et le localhost
-ALLOWED_HOSTS = ['192.168.1.31', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['192.168.1.31', '127.0.0.1', 'localhost', '10.0.2.2', 'localhost']
  
 INSTALLED_APPS = [
     'django.contrib.admin',

@@ -7,7 +7,7 @@ import '../models/date_conversion.dart';
 
 class ApiService {
   // 10.0.2.2 = votre PC depuis l'emulateur Android
-  static const String baseUrl = 'http://192.168.1.:8000/api';
+  static const String baseUrl = 'http://10.0.2.2:8000/api';
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
