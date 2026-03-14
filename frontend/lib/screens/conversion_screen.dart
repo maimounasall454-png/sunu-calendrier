@@ -2,17 +2,13 @@
 // frontend/lib/screens/conversion_screen.dart 
 
 import 'package:flutter/material.dart'; 
-
 import '../services/api_service.dart'; 
-
 import '../models/date_conversion.dart'; 
 
   
 
 class ConversionScreen extends StatefulWidget { 
-
   const ConversionScreen({super.key}); 
-
   @override State<ConversionScreen> createState() => _ConversionScreenState(); 
 
 } 
@@ -72,7 +68,7 @@ class _ConversionScreenState extends State<ConversionScreen> {
 
     appBar: AppBar(title: const Text('Conversion de Dates'), 
 
-      backgroundColor: const Color(0xFF4A148C), foregroundColor: Colors.white), 
+      backgroundColor: const Color(0xFF33691E),    ),
 
     body: Padding(padding: const EdgeInsets.all(16), 
 
@@ -82,7 +78,7 @@ class _ConversionScreenState extends State<ConversionScreen> {
 
           Row(children: [ 
 
-            const Icon(Icons.calendar_today, color: Color(0xFF4A148C)), 
+            const Icon(Icons.calendar_today, color: Color(0xFF33691E)), 
 
             const SizedBox(width: 12), 
 
@@ -108,7 +104,7 @@ class _ConversionScreenState extends State<ConversionScreen> {
 
             label: const Text('Changer la date'), 
 
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4A148C), foregroundColor: Colors.white), 
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF33691E), foregroundColor: Colors.white), 
 
           )), 
 

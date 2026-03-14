@@ -102,4 +102,35 @@ class ApiService {
   }
 
   static Future<bool> estConnecte() async => (await _getToken()) != null;
+
+  // Récupérer les fêtes automatiques
+static Future<List<dynamic>> getFetesAutomatiques({int annee = 2026}) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/calendrier/fetes-auto/?annee=$annee'),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['evenements'] ?? [];
+    }
+  } catch (e) {
+    print('Erreur fetes: $e');
+  }
+  return [];
+}
+
+  // Récupérer les horaires de prière
+  static Future<Map<String, dynamic>> getHorairesPriere() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/calendrier/prieres/'),
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+    } catch (e) {
+      print('Erreur prieres: $e');
+    }
+    return {};
+  }
 }

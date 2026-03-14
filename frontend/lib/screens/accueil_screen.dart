@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/date_conversion.dart';
+import '../main.dart';
 
 class AccueilScreen extends StatefulWidget {
   const AccueilScreen({super.key});
@@ -18,6 +19,28 @@ class _AccueilScreenState extends State<AccueilScreen> {
   void initState() {
     super.initState();
     _charger();
+  }
+
+  String _compteARebours() {
+    final prochaineFete = [
+      {'nom': 'Nuit du Destin', 'date': '2026-03-16'},
+      {'nom': 'Korité',         'date': '2026-03-20'},
+      {'nom': 'Tabaski',        'date': '2026-05-27'},
+      {'nom': 'Tamkharit',      'date': '2026-06-25'},
+      {'nom': 'Gamou',          'date': '2026-08-25'},
+    ];
+
+    final today = DateTime.now();
+    for (final fete in prochaineFete) {
+      final dateFete = DateTime.parse(fete['date']!);
+      final diff = dateFete.difference(today).inDays;
+      if (diff >= 0) {
+        if (diff == 0) return '🎉 ${fete['nom']} c\'est aujourd\'hui !';
+        if (diff == 1) return '⏳ ${fete['nom']} demain !';
+        return '🌙 ${fete['nom']} dans $diff jours';
+      }
+    }
+    return '';
   }
 
   Future<void> _charger() async {
@@ -41,14 +64,24 @@ class _AccueilScreenState extends State<AccueilScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
+   appBar: AppBar(
       title: const Text('Sunu Calendrier'),
-      backgroundColor: const Color(0xFF0553B1),
+      backgroundColor: const Color(0xFF1B5E20),
       foregroundColor: Colors.white,
       actions: [
-        IconButton(icon: const Icon(Icons.refresh), onPressed: _charger),
+        IconButton(
+          icon: Icon(
+            Theme.of(context).brightness == Brightness.dark
+                ? Icons.light_mode
+                : Icons.dark_mode,
+          ),
+          onPressed: () {
+            SunuCalendrierApp.of(context)?.toggleDarkMode();
+          },
+        ),
       ],
     ),
+
     body: _loading
         ? const Center(child: CircularProgressIndicator())
         : _erreur != null
@@ -88,6 +121,41 @@ class _AccueilScreenState extends State<AccueilScreen> {
             'Aujourd\'hui',
             style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
           ),
+          // Compte à rebours
+          if (_compteARebours().isNotEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1B5E20).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Text('🕌', style: TextStyle(fontSize: 28)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _compteARebours(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: 20),
           _carte(
             'Calendrier Grégorien',

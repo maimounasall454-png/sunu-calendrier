@@ -1,27 +1,118 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/accueil_screen.dart';
+import 'screens/conversion_screen.dart';
+import 'screens/evenements_screen.dart';
+import 'screens/profil_screen.dart';
+import 'screens/prieres_screen.dart';
+import 'screens/splash_screen.dart';
 
-void main() {
-  runApp(const SunucladrierApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final isDark = prefs.getBool('dark_mode') ?? false;
+  runApp(SunuCalendrierApp(isDarkMode: isDark));
 }
 
-class SunucladrierApp extends StatelessWidget {
-  const SunucladrierApp({super.key});
+class SunuCalendrierApp extends StatefulWidget {
+  final bool isDarkMode;
+  const SunuCalendrierApp({super.key, required this.isDarkMode});
+
+  static _SunuCalendrierAppState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_SunuCalendrierAppState>();
+
+  @override
+  State<SunuCalendrierApp> createState() => _SunuCalendrierAppState();
+}
+
+class _SunuCalendrierAppState extends State<SunuCalendrierApp> {
+  late bool _isDarkMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDarkMode = widget.isDarkMode;
+  }
+
+  void toggleDarkMode() async {
+    setState(() => _isDarkMode = !_isDarkMode);
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('dark_mode', _isDarkMode);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sunu calendar',
+      title: 'Sunu Calendrier',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: const Color(0xFF0553B1),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1B5E20),
+          brightness: Brightness.light,
+        ),
+        useMaterial3: true,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0553B1),
+          backgroundColor: Color(0xFF1B5E20),
           foregroundColor: Colors.white,
         ),
       ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1B5E20),
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1B5E20),
+          foregroundColor: Colors.white,
+        ),
+      ),
+      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      // ── Routes ──────────────────────────────────
+      initialRoute: '/splash',
+      routes: {
+        '/splash': (context) => const SplashScreen(),
+        '/main':   (context) => const MainScreen(),
+      },
+    );
+  }
+}
 
-      home: const AccueilScreen(),
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const AccueilScreen(),
+    const PrieresScreen(),
+    const Scaffold(body: Center(child: Text('Calendrier — En attente de M3'))),
+    const ConversionScreen(),
+    const EvenementsScreen(),
+    const ProfilScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_currentIndex],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) =>
+            setState(() => _currentIndex = index),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home),           label: 'Accueil'),
+          NavigationDestination(icon: Icon(Icons.mosque), label: 'Prières'),
+          NavigationDestination(icon: Icon(Icons.calendar_month), label: 'Calendrier'),
+          NavigationDestination(icon: Icon(Icons.swap_horiz),     label: 'Convertir'),
+          NavigationDestination(icon: Icon(Icons.event),          label: 'Événement'),
+          NavigationDestination(icon: Icon(Icons.person),         label: 'Profil'),
+        ],
+      ),
     );
   }
 }

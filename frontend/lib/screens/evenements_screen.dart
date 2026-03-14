@@ -1,102 +1,271 @@
-// frontend/lib/screens/evenements_screen.dart
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/evenement.dart';
- 
+
 class EvenementsScreen extends StatefulWidget {
   const EvenementsScreen({super.key});
-  @override State<EvenementsScreen> createState() => _EvenementsScreenState();
-}
-class _EvenementsScreenState extends State<EvenementsScreen> {
-  List<Evenement> _evts = []; bool _loading = true;
-  @override void initState() { super.initState(); _charger(); }
- 
-  Future<void> _charger() async {
-    setState(() => _loading = true);
-    try { final d = await ApiService.getEvenements(); setState(() { _evts = d; _loading = false; }); }
-    catch (e) { setState(() => _loading = false); }
-  }
- 
-  Color _couleur(String t) {
-    switch(t) { case 'islamique': return const Color(0xFF1B5E20);
-      case 'wolof': return Colors.orange; case 'national': return Colors.blue;
-      default: return Colors.grey; }
-  }
- 
-  Future<void> _ajouter() async {
-    final tCtrl = TextEditingController();
-    final dCtrl = TextEditingController();
-    DateTime dateChoisie = DateTime.now();
-    String type = 'personnel';
-    await showDialog(context: context, builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setL) => AlertDialog(
-        title: const Text('Nouvel événement'),
-        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: tCtrl,
-            decoration: const InputDecoration(labelText:'Titre *', border: OutlineInputBorder())),
-          const SizedBox(height:10),
-          TextField(controller: dCtrl, maxLines:2,
-            decoration: const InputDecoration(labelText:'Description', border: OutlineInputBorder())),
-          const SizedBox(height:10),
-          ListTile(contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.calendar_today),
-            title: Text('${dateChoisie.day}/${dateChoisie.month}/${dateChoisie.year}'),
-            subtitle: const Text('Date de l\'événement'),
-            onTap: () async {
-              final d = await showDatePicker(context: ctx,
-                initialDate: dateChoisie, firstDate: DateTime(2000), lastDate: DateTime(2050));
-              if (d != null) setL(() => dateChoisie = d);
-            }),
-          DropdownButtonFormField<String>(value: type,
-            decoration: const InputDecoration(labelText:'Type'),
-            onChanged: (v) => setL(() => type = v!),
-            items: const [
-              DropdownMenuItem(value:'islamique', child:Text('Islamique')),
-              DropdownMenuItem(value:'wolof',     child:Text('Wolof')),
-              DropdownMenuItem(value:'personnel', child:Text('Personnel')),
-              DropdownMenuItem(value:'national',  child:Text('National')),
-            ]),
-        ])),
-        actions: [
-          TextButton(onPressed: ()=>Navigator.pop(ctx), child: const Text('Annuler')),
-          ElevatedButton(onPressed: () async {
-            if (tCtrl.text.trim().isEmpty) return;
-            final ok = await ApiService.creerEvenement(Evenement(titre: tCtrl.text.trim(), description: dCtrl.text.trim(), date: '${dateChoisie.year}-${dateChoisie.month.toString().padLeft(2,'0')}-${dateChoisie.day.toString().padLeft(2,'0')}', typeEvent: type));
-            if (ok) { Navigator.pop(ctx); _charger(); }
-          }, child: const Text('Créer')),
-        ])));
-  }
- 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Événements'),
-      backgroundColor: const Color(0xFFB71C1C), foregroundColor: Colors.white),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: _ajouter, icon: const Icon(Icons.add), label: const Text('Ajouter'),
-      backgroundColor: const Color(0xFFB71C1C), foregroundColor: Colors.white),
-    body: _loading ? const Center(child: CircularProgressIndicator())
-      : _evts.isEmpty
-        ? const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.event_busy, size:64, color:Colors.grey),
-            SizedBox(height:12),
-            Text('Aucun événement', style: TextStyle(color:Colors.grey, fontSize:16)),
-            Text('Appuyez sur + pour en créer un', style: TextStyle(color:Colors.grey, fontSize:12)),
-          ]))
-        : RefreshIndicator(onRefresh: _charger, child: ListView.builder(
-            itemCount: _evts.length,
-            itemBuilder: (_, i) {
-              final e = _evts[i]; final c = _couleur(e.typeEvent);
-              return Card(margin: const EdgeInsets.symmetric(horizontal:12, vertical:4),
-                child: ListTile(
-                  leading: CircleAvatar(backgroundColor: c.withOpacity(0.1),
-                    child: Icon(Icons.event, color:c, size:20)),
-                  title: Text(e.titre, style: const TextStyle(fontWeight:FontWeight.bold)),
-                  subtitle: Text('${e.date} — ${e.typeEvent}'),
-                  trailing: e.id != null ? IconButton(
-                    icon: const Icon(Icons.delete_outline, color:Colors.red),
-                    onPressed: () async { await ApiService.supprimerEvenement(e.id!); _charger(); }) : null,
-                ));
-            })),
-  );
+  State<EvenementsScreen> createState() => _EvenementsScreenState();
 }
 
+class _EvenementsScreenState extends State<EvenementsScreen> {
+  List<dynamic> _fetes = [];
+  List<dynamic> _evenementsPerso = [];
+  bool _loading = true;
+  String _filtre = 'tous';
+
+  @override
+  void initState() {
+    super.initState();
+    _chargerDonnees();
+  }
+
+  Future<void> _chargerDonnees() async {
+    setState(() => _loading = true);
+    try {
+      // Fêtes automatiques depuis l'API
+      final fetes = await ApiService.getFetesAutomatiques();
+      // Événements personnels depuis l'API
+      final evts = await ApiService.getEvenements();
+      setState(() {
+        _fetes = fetes;
+        _evenementsPerso = evts;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() => _loading = false);
+    }
+  }
+
+  List<dynamic> get _tousEvenements {
+    final fetesMapped = _fetes.map((f) => {
+      'titre': f['nom'],
+      'date': f['date'],
+      'type': f['type'],
+      'source': f['source'],
+      'auto': true,
+    }).toList();
+    final persoMapped = _evenementsPerso.map((e) => {
+      'titre': e['titre'] ?? e['title'] ?? '',
+      'date': e['date'] ?? '',
+      'type': 'personnel',
+      'auto': false,
+    }).toList();
+    final tous = [...fetesMapped, ...persoMapped];
+    tous.sort((a, b) => (a['date'] ?? '').compareTo(b['date'] ?? ''));
+    return tous;
+  }
+
+  List<dynamic> get _evenementsFiltres {
+    if (_filtre == 'tous') return _tousEvenements;
+    return _tousEvenements.where((e) => e['type'] == _filtre).toList();
+  }
+
+  Color _couleurType(String type) {
+    switch (type) {
+      case 'islamique': return const Color(0xFF1B5E20);
+      case 'national':  return const Color(0xFF0553B1);
+      case 'personnel': return const Color(0xFF6A1B9A);
+      default:          return Colors.grey;
+    }
+  }
+
+  Color _bgType(String type) {
+    switch (type) {
+      case 'islamique': return const Color(0xFFE8F5E9);
+      case 'national':  return const Color(0xFFE3F2FD);
+      case 'personnel': return const Color(0xFFF3E5F5);
+      default:          return Colors.grey.shade100;
+    }
+  }
+
+  String _labelType(String type) {
+    switch (type) {
+      case 'islamique': return 'Islamique';
+      case 'national':  return 'National';
+      case 'personnel': return 'Personnel';
+      default:          return type;
+    }
+  }
+
+  String _iconeType(String type) {
+    switch (type) {
+      case 'islamique': return '🌙';
+      case 'national':  return '🇸🇳';
+      case 'personnel': return '👤';
+      default:          return '📌';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Événements'),
+        backgroundColor: const Color(0xFF33691E),        
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _chargerDonnees,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // ── Filtres ──────────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            color: Theme.of(context).cardColor,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: ['tous', 'islamique', 'national', 'personnel']
+                    .map((f) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                                    label: Text(
+                                      _filtre == 'tous' && f == 'tous'
+                                          ? 'Tous (${_tousEvenements.length})'
+                                          : _labelType(f),
+                                      style: TextStyle(
+                                        color: _filtre == f
+                                            ? _couleurType(f == 'tous' ? 'national' : f)
+                                            : Theme.of(context).colorScheme.onSurface,
+                                        fontWeight: _filtre == f
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                    selected: _filtre == f,
+                                    onSelected: (_) => setState(() => _filtre = f),
+                                    selectedColor: Theme.of(context).brightness == Brightness.dark
+                                        ? _couleurType(f == 'tous' ? 'national' : f).withOpacity(0.3)
+                                        : _bgType(f == 'tous' ? 'national' : f),
+                                    backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.grey.shade800
+                                        : Colors.grey.shade200,
+                                    side: BorderSide(
+                                      color: _filtre == f
+                                          ? _couleurType(f == 'tous' ? 'national' : f)
+                                          : Colors.transparent,
+                                    ),
+                                  ),
+                        ))
+                    .toList(),
+              ),
+            ),
+          ),
+
+          // ── Liste ────────────────────────────────────
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _evenementsFiltres.isEmpty
+                    ? const Center(child: Text('Aucun événement'))
+                    : RefreshIndicator(
+                        onRefresh: _chargerDonnees,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: _evenementsFiltres.length,
+                          itemBuilder: (context, index) {
+                            final evt = _evenementsFiltres[index];
+                            final type = evt['type'] ?? 'personnel';
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: _bgType(type),
+                                  child: Text(
+                                    _iconeType(type),
+                                    style: const TextStyle(fontSize: 18),
+                                  ),
+                                ),
+                                title: Text(
+                                  evt['titre'] ?? '',
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                subtitle: Text(evt['date'] ?? ''),
+                                trailing: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: _bgType(type),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    _labelType(type),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: _couleurType(type),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _ajouterEvenement,
+        backgroundColor: const Color(0xFF33691E),        
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Ajouter'),
+      ),
+    );
+  }
+
+  void _ajouterEvenement() {
+    final titreCtrl = TextEditingController();
+    final dateCtrl  = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Nouvel événement'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titreCtrl,
+              decoration: const InputDecoration(labelText: 'Titre'),
+            ),
+            TextField(
+              controller: dateCtrl,
+              decoration: const InputDecoration(
+                  labelText: 'Date (AAAA-MM-JJ)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (titreCtrl.text.isNotEmpty && dateCtrl.text.isNotEmpty) {
+                await ApiService.creerEvenement(
+                  Evenement(
+                    titre: titreCtrl.text,
+                    description: '',
+                    date: dateCtrl.text,
+                    typeEvent: 'personnel',
+                    estPublic: false,
+                  ),
+                );
+                Navigator.pop(ctx);
+                _chargerDonnees();
+              }
+            },
+            child: const Text('Ajouter'),
+          ),
+        ],
+      ),
+    );
+  }
+}
