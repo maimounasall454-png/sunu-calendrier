@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sunu_calendrier/screens/calendrier_screen.dart';
 import 'screens/accueil_screen.dart';
 import 'screens/conversion_screen.dart';
 import 'screens/evenements_screen.dart';
@@ -80,6 +81,11 @@ class _SunuCalendrierAppState extends State<SunuCalendrierApp> {
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+
+    // AJOUTER dans _MainScreenState
+  static _MainScreenState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MainScreenState>(); 
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
@@ -87,10 +93,12 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
+  void allerVers(int index) => setState(() => _currentIndex = index);
+
   final List<Widget> _screens = [
     const AccueilScreen(),
     const PrieresScreen(),
-    const Scaffold(body: Center(child: Text('Calendrier — En attente de M3'))),
+    const CalendrierScreen(),
     const ConversionScreen(),
     const EvenementsScreen(),
     const ProfilScreen(),

@@ -105,11 +105,15 @@ def fetes_automatiques(request):
         {"nom": "Mawlid (Gamou)",        "mois": 3,  "jour": 12},
         {"nom": "Tamkharit",             "mois": 1,  "jour": 10},
         {"nom": "Nuit du Destin",        "mois": 9,  "jour": 27},
+        {"nom": "Isra wal Mi'raj",       "mois": 7,  "jour": 27},
+        {"nom": "Grand Magal de Touba",  "mois": 2,  "jour": 18},
+        {"nom": "Gamou Médina Baye",     "mois": 3,  "jour": 14},
+        {"nom": "Tamkharit (Nouvel An)", "mois": 1,  "jour": 1 },
     ]
 
     for fete in fetes_hijri:
         # On parcourt plusieurs années Hijri pour être sûr
-        for y in range(1400, 1500):  # plage large pour couvrir l'année grégorienne
+        for y in range(1400, 1460):  # plage large pour couvrir l'année grégorienne
             try:
                 g = Hijri(y, fete["mois"], fete["jour"]).to_gregorian()
                 if g.year == annee:
